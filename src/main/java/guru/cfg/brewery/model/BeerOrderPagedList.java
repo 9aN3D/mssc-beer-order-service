@@ -1,4 +1,4 @@
-package guru.springframework.mssc.beer.order.service.web.model;
+package guru.cfg.brewery.model;
 
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;

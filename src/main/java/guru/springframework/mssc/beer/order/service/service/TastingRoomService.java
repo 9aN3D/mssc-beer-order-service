@@ -4,8 +4,8 @@ import guru.springframework.mssc.beer.order.service.bootstrap.BeerOrderBootStrap
 import guru.springframework.mssc.beer.order.service.domain.Customer;
 import guru.springframework.mssc.beer.order.service.repository.BeerOrderRepository;
 import guru.springframework.mssc.beer.order.service.repository.CustomerRepository;
-import guru.springframework.mssc.beer.order.service.web.model.BeerOrderDto;
-import guru.springframework.mssc.beer.order.service.web.model.BeerOrderLineDto;
+import guru.cfg.brewery.model.BeerOrderDto;
+import guru.cfg.brewery.model.BeerOrderLineDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

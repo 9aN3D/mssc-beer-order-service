@@ -8,8 +8,8 @@ import guru.springframework.mssc.beer.order.service.exception.OrderNotForCustome
 import guru.springframework.mssc.beer.order.service.repository.BeerOrderRepository;
 import guru.springframework.mssc.beer.order.service.repository.CustomerRepository;
 import guru.springframework.mssc.beer.order.service.web.mappers.BeerOrderMapper;
-import guru.springframework.mssc.beer.order.service.web.model.BeerOrderDto;
-import guru.springframework.mssc.beer.order.service.web.model.BeerOrderPagedList;
+import guru.cfg.brewery.model.BeerOrderDto;
+import guru.cfg.brewery.model.BeerOrderPagedList;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

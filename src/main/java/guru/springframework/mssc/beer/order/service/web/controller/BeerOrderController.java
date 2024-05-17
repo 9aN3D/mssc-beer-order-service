@@ -1,8 +1,8 @@
 package guru.springframework.mssc.beer.order.service.web.controller;
 
 import guru.springframework.mssc.beer.order.service.service.BeerOrderService;
-import guru.springframework.mssc.beer.order.service.web.model.BeerOrderDto;
-import guru.springframework.mssc.beer.order.service.web.model.BeerOrderPagedList;
+import guru.cfg.brewery.model.BeerOrderDto;
+import guru.cfg.brewery.model.BeerOrderPagedList;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
