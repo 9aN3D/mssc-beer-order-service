@@ -3,8 +3,8 @@ package guru.springframework.mssc.beer.order.service.domain;
 public enum BeerOrderStatus {
 
     NEW,
-    VALIDATED,
     VALIDATION_PENDING,
+    VALIDATED,
     VALIDATION_EXCEPTION,
     ALLOCATION_PENDING,
     ALLOCATED,
