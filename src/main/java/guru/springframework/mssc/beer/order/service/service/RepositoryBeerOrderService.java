@@ -12,6 +12,7 @@ import guru.springframework.mssc.beer.order.service.repository.BeerOrderReposito
 import guru.springframework.mssc.beer.order.service.repository.CustomerRepository;
 import guru.springframework.mssc.beer.order.service.web.mappers.BeerOrderMapper;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -30,7 +31,8 @@ import static java.util.stream.Collectors.toList;
 
 @Slf4j
 @Service
-@AllArgsConstructor
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class RepositoryBeerOrderService implements BeerOrderService {
 
     private final BeerOrderRepository beerOrderRepository;
@@ -52,10 +54,12 @@ public class RepositoryBeerOrderService implements BeerOrderService {
                 beerOrderPage.getTotalElements());
     }
 
-    @Override
+
     @Transactional
+    @Override
     public BeerOrderDto placeOrder(UUID customerId, BeerOrderDto beerOrderDto) {
         log.trace("Placing order {customerID: {}, beerOrderDto: {}}", customerId, beerOrderDto);
+
         Customer customer = getCustomerById(customerId);
         BeerOrder beerOrder = beerOrderMapper.dtoToBeerOrder(beerOrderDto);
         beerOrder.setId(null);
@@ -66,6 +70,7 @@ public class RepositoryBeerOrderService implements BeerOrderService {
 
         BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
         BeerOrderDto savedBeerOrderDto = beerOrderMapper.beerOrderToDto(savedBeerOrder);
+
         log.info("Placed order {beer order id: {}}", savedBeerOrderDto.getId());
         return savedBeerOrderDto;
     }
@@ -73,14 +78,28 @@ public class RepositoryBeerOrderService implements BeerOrderService {
     @Override
     public BeerOrderDto getOrderById(UUID customerId, UUID orderId) {
         log.trace("Getting order {customerId: {}, orderId: {}}", customerId, orderId);
+
         BeerOrderDto beerOrderDto = beerOrderMapper.beerOrderToDto(getOrder(customerId, orderId));
+
         log.info("Got order {beerOrderDto: {}}", beerOrderDto);
         return beerOrderDto;
     }
 
     @Override
+    public BeerOrderDto getOrder(UUID orderId) {
+        log.trace("Getting order {orderId: {}}", orderId);
+
+        BeerOrderDto result = beerOrderMapper.beerOrderToDto(getBeerOrderById(orderId));
+
+        log.info("Got order {result: {}}", result);
+        return result;
+    }
+
+    @Transactional
+    @Override
     public void pickupOrder(UUID customerId, UUID orderId) {
         log.trace("Picking order {customerId: {}, orderId: {}}", customerId, orderId);
+
         BeerOrder beerOrder = getOrder(customerId, orderId);
         beerOrder.setOrderStatus(PICKED_UP);
 

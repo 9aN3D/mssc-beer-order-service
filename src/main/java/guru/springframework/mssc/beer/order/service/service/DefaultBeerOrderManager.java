@@ -18,9 +18,7 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatu
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class DefaultBeerOrderManager implements BeerOrderManager {
-
-    public static final String ORDER_ID_HEADER = "ORDER_ID_HEADER";
+class DefaultBeerOrderManager implements BeerOrderManager {
 
     private final StateMachineFactory<BeerOrderStatus, BeerOrderEventEnum> stateMachineFactory;
     private final BeerOrderRepository beerOrderRepository;

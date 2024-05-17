@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.UUID;
 
-import static guru.springframework.mssc.beer.order.service.service.DefaultBeerOrderManager.ORDER_ID_HEADER;
+import static guru.springframework.mssc.beer.order.service.service.BeerOrderManager.ORDER_ID_HEADER;
 
 @Component
 @RequiredArgsConstructor
