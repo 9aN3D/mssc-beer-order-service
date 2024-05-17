@@ -18,4 +18,11 @@
 
     <description>MSSC Beer Order Service</description>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.statemachine</groupId>
+            <artifactId>spring-statemachine-core</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>
