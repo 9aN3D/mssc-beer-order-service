@@ -20,6 +20,7 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatu
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PICKED_UP;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_EXCEPTION;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_PENDING;
 
 @Configuration
 @EnableStateMachineFactory
@@ -39,7 +40,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
 
     @Override
     public void configure(StateMachineTransitionConfigurer<BeerOrderStatus, BeerOrderEventEnum> transitions) throws Exception {
-        transitions.withExternal().source(NEW).target(NEW)
+        transitions.withExternal().source(NEW).target(VALIDATION_PENDING)
                 .event(VALIDATE_ORDER)
                 .and()
                 .withExternal().source(NEW).target(VALIDATED)
