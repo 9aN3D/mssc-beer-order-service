@@ -1,4 +1,4 @@
-package guru.cfg.brewery.model.events;
+package guru.cfg.brewery.model.messages;
 
 import java.io.Serializable;
 

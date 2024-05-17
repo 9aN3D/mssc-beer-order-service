@@ -1,7 +1,7 @@
 package guru.springframework.mssc.beer.order.service.events.producers;
 
-import guru.cfg.brewery.model.events.Message;
-import guru.cfg.brewery.model.events.ValidateOrderRequest;
+import guru.cfg.brewery.model.messages.Message;
+import guru.cfg.brewery.model.messages.ValidateOrderRequest;
 import guru.springframework.mssc.beer.order.service.config.JmsConfig;
 
 public interface EventProducer {

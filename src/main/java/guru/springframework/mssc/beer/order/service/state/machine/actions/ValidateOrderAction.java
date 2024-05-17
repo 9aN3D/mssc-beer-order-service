@@ -1,7 +1,7 @@
 package guru.springframework.mssc.beer.order.service.state.machine.actions;
 
 import guru.cfg.brewery.model.BeerOrderDto;
-import guru.cfg.brewery.model.events.ValidateOrderRequest;
+import guru.cfg.brewery.model.messages.ValidateOrderRequest;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus;
 import guru.springframework.mssc.beer.order.service.events.producers.EventProducer;
