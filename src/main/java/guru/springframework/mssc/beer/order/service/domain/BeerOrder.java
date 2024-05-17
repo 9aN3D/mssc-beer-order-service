@@ -15,7 +15,7 @@ import java.sql.Timestamp;
 import java.util.Set;
 import java.util.UUID;
 
-import static guru.springframework.mssc.beer.order.service.domain.OrderStatusEnum.NEW;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.NEW;
 
 @Getter
 @Setter
@@ -32,7 +32,7 @@ public class BeerOrder extends BaseEntity {
     @Fetch(FetchMode.JOIN)
     private Set<BeerOrderLine> beerOrderLines;
 
-    private OrderStatusEnum orderStatus = NEW;
+    private BeerOrderStatus orderStatus = NEW;
 
     private String orderStatusCallbackUrl;
 
@@ -44,7 +44,7 @@ public class BeerOrder extends BaseEntity {
                      String customerRef,
                      Customer customer,
                      Set<BeerOrderLine> beerOrderLines,
-                     OrderStatusEnum orderStatus,
+                     BeerOrderStatus orderStatus,
                      String orderStatusCallbackUrl) {
         super(id, version, createdDate, lastModifiedDate);
         this.customerRef = customerRef;

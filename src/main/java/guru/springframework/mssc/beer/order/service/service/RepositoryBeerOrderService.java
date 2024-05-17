@@ -22,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-import static guru.springframework.mssc.beer.order.service.domain.OrderStatusEnum.NEW;
-import static guru.springframework.mssc.beer.order.service.domain.OrderStatusEnum.PICKED_UP;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.NEW;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PICKED_UP;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 

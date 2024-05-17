@@ -1,6 +1,5 @@
 package guru.springframework.mssc.beer.order.service.web.model;
 
-import guru.springframework.mssc.beer.order.service.domain.OrderStatusEnum;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,7 +22,7 @@ public class BeerOrderDto extends BaseItem {
 
     private List<BeerOrderLineDto> beerOrderLines;
 
-    private OrderStatusEnum orderStatus;
+    private String orderStatus;
 
     private String orderStatusCallbackUrl;
 
@@ -34,7 +33,7 @@ public class BeerOrderDto extends BaseItem {
                         OffsetDateTime lastModifiedDate,
                         UUID customerId,
                         List<BeerOrderLineDto> beerOrderLines,
-                        OrderStatusEnum orderStatus,
+                        String orderStatus,
                         String orderStatusCallbackUrl,
                         String customerRef) {
         super(id, version, createdDate, lastModifiedDate);
