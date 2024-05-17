@@ -1,6 +1,9 @@
 package guru.springframework.mssc.beer.order.service.service;
 
+import guru.cfg.brewery.model.BeerOrderDto;
+import guru.cfg.brewery.model.BeerOrderPagedList;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrder;
+import guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus;
 import guru.springframework.mssc.beer.order.service.domain.Customer;
 import guru.springframework.mssc.beer.order.service.exception.BeerOrderNotFoundException;
 import guru.springframework.mssc.beer.order.service.exception.CustomerNotFoundException;
@@ -8,8 +11,6 @@ import guru.springframework.mssc.beer.order.service.exception.OrderNotForCustome
 import guru.springframework.mssc.beer.order.service.repository.BeerOrderRepository;
 import guru.springframework.mssc.beer.order.service.repository.CustomerRepository;
 import guru.springframework.mssc.beer.order.service.web.mappers.BeerOrderMapper;
-import guru.cfg.brewery.model.BeerOrderDto;
-import guru.cfg.brewery.model.BeerOrderPagedList;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -85,6 +86,18 @@ public class RepositoryBeerOrderService implements BeerOrderService {
 
         BeerOrder beerOrderSaved = beerOrderRepository.save(beerOrder);
         log.info("Picked order {id: {}}", beerOrderSaved.getId());
+    }
+
+    @Transactional
+    @Override
+    public void updateStatus(UUID orderId, BeerOrderStatus status) {
+        log.trace("Updating order status {orderId: {}, status: {}}", orderId, status);
+
+        BeerOrder beerOrder = getBeerOrderById(orderId);
+        beerOrder.setOrderStatus(status);
+        BeerOrder beerOrderSaved = beerOrderRepository.saveAndFlush(beerOrder);
+
+        log.trace("Updated order status {orderId: {}, result: {}}", orderId, beerOrderSaved);
     }
 
     private Customer getCustomerById(UUID customerId) {

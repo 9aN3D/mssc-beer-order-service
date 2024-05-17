@@ -9,6 +9,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
+import org.springframework.statemachine.support.StateMachineInterceptorAdapter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class DefaultBeerOrderManager implements BeerOrderManager {
 
     private final StateMachineFactory<BeerOrderStatus, BeerOrderEventEnum> stateMachineFactory;
     private final BeerOrderRepository beerOrderRepository;
+    private final StateMachineInterceptorAdapter<BeerOrderStatus, BeerOrderEventEnum> beerOrderStateChangeInterceptor;
 
     @Override
     public BeerOrder newBeerOrder(BeerOrder beerOrder) {
@@ -48,6 +50,7 @@ public class DefaultBeerOrderManager implements BeerOrderManager {
 
         stateMachine.getStateMachineAccessor()
                 .doWithAllRegions(sma -> {
+                    sma.addStateMachineInterceptor(beerOrderStateChangeInterceptor);
                     sma.resetStateMachine(new DefaultStateMachineContext<>(beerOrder.getOrderStatus(), null, null, null));
                 });
 
