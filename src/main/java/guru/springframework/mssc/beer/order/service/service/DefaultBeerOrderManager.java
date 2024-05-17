@@ -13,6 +13,11 @@ import org.springframework.statemachine.support.StateMachineInterceptorAdapter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATE_ORDER;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.NEW;
 
 @Service
@@ -30,8 +35,14 @@ class DefaultBeerOrderManager implements BeerOrderManager {
         beerOrder.setOrderStatus(NEW);
 
         BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
-        sendBeerOrderEvent(savedBeerOrder, BeerOrderEventEnum.VALIDATE_ORDER);
+        sendBeerOrderEvent(savedBeerOrder, VALIDATE_ORDER);
         return savedBeerOrder;
+    }
+
+    @Override
+    public void processValidationResult(UUID orderId, Boolean isValid) {
+        BeerOrder beerOrder = beerOrderRepository.getOne(orderId);
+        sendBeerOrderEvent(beerOrder, isValid ? VALIDATION_PASSED : VALIDATION_FAILED);
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum eventEnum) {
