@@ -17,14 +17,19 @@ import org.springframework.statemachine.state.State;
 import java.util.EnumSet;
 
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATED_ORDER;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_FAILED;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_EXCEPTION;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_PENDING;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.DELIVERED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.DELIVERY_EXCEPTION;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.NEW;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PENDING_INVENTORY;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PICKED_UP;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_EXCEPTION;
@@ -67,7 +72,16 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
                 .and()
                 .withExternal().source(VALIDATED).target(ALLOCATION_PENDING)
                 .event(ALLOCATED_ORDER)
-                .action(allocateOrderAction);
+                .action(allocateOrderAction)
+                .and()
+                .withExternal().source(ALLOCATION_PENDING).target(ALLOCATED)
+                .event(ALLOCATION_SUCCESS)
+                .and()
+                .withExternal().source(ALLOCATION_PENDING).target(ALLOCATION_EXCEPTION)
+                .event(ALLOCATION_FAILED)
+                .and()
+                .withExternal().source(ALLOCATION_PENDING).target(PENDING_INVENTORY)
+                .event(ALLOCATION_NO_INVENTORY);
     }
 
     @Override

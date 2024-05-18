@@ -19,18 +19,18 @@ import java.util.UUID;
 public class BeerOrderLineDto {
 
     @JsonProperty("id")
-    private UUID id = null;
+    private UUID id;
 
     @JsonProperty("version")
-    private Integer version = null;
+    private Integer version;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssZ", shape = JsonFormat.Shape.STRING)
     @JsonProperty("createdDate")
-    private OffsetDateTime createdDate = null;
+    private OffsetDateTime createdDate;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssZ", shape = JsonFormat.Shape.STRING)
     @JsonProperty("lastModifiedDate")
-    private OffsetDateTime lastModifiedDate = null;
+    private OffsetDateTime lastModifiedDate;
 
     private String upc;
 
@@ -41,6 +41,8 @@ public class BeerOrderLineDto {
     private UUID beerId;
 
     private Integer orderQuantity = 0;
+
+    private Integer quantityAllocated;
 
     private BigDecimal price;
 
