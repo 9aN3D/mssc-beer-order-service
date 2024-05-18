@@ -5,12 +5,10 @@ import guru.cfg.brewery.model.messages.AllocateOrderRequest;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus;
 import guru.springframework.mssc.beer.order.service.events.producers.EventProducer;
-import guru.springframework.mssc.beer.order.service.service.BeerOrderManager;
 import guru.springframework.mssc.beer.order.service.service.BeerOrderQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.statemachine.StateContext;
-import org.springframework.statemachine.action.Action;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;

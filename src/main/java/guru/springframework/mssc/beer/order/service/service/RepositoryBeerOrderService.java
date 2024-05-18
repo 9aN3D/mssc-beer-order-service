@@ -72,7 +72,7 @@ class RepositoryBeerOrderService extends BaseBeerOrderService implements BeerOrd
         beerOrder.setOrderStatus(status);
         BeerOrder beerOrderSaved = beerOrderRepository.saveAndFlush(beerOrder);
 
-        log.trace("Updated order status {orderId: {}, result: {}}", orderId, beerOrderSaved);
+        log.info("Updated order status {orderId: {}, result: {}}", orderId, beerOrderSaved);
     }
 
 }

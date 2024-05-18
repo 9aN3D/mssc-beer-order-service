@@ -3,6 +3,7 @@ package guru.springframework.mssc.beer.order.service.domain;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
@@ -22,6 +23,7 @@ import static java.util.Objects.isNull;
 @Getter
 @MappedSuperclass
 @NoArgsConstructor
+@ToString
 public class BaseEntity {
 
     @Id

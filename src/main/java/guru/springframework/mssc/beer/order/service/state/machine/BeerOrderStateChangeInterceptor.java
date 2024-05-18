@@ -10,13 +10,16 @@ import org.springframework.statemachine.state.State;
 import org.springframework.statemachine.support.StateMachineInterceptorAdapter;
 import org.springframework.statemachine.transition.Transition;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
 
 import static guru.springframework.mssc.beer.order.service.service.BeerOrderManager.ORDER_ID_HEADER;
+import static java.util.function.Predicate.not;
 
 @Component
+@Transactional
 @RequiredArgsConstructor
 public class BeerOrderStateChangeInterceptor extends StateMachineInterceptorAdapter<BeerOrderStatus, BeerOrderEventEnum> {
 
@@ -29,7 +32,7 @@ public class BeerOrderStateChangeInterceptor extends StateMachineInterceptorAdap
                                StateMachine<BeerOrderStatus, BeerOrderEventEnum> stateMachine) {
         Optional.ofNullable(message)
                 .flatMap(msg -> Optional.ofNullable((String) msg.getHeaders().getOrDefault(ORDER_ID_HEADER, "")))
-                .filter(String::isEmpty)
+                .filter(not(String::isEmpty))
                 .ifPresent(orderId -> beerOrderService.updateStatus(UUID.fromString(orderId), state.getId()));
     }
 

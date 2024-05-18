@@ -15,9 +15,6 @@ import java.util.UUID;
 @ConfigurationProperties(prefix = "sfg.brewery", ignoreUnknownFields = false)
 public class RestTemplateBeerService implements BeerService {
 
-    private final String BEER_PATH_V1 = "/api/v1/beers/";
-    private final String BEER_UPC_PATH_V1 = "/api/v1/beers/upc/";
-
     private final RestTemplate restTemplate;
 
     @Setter

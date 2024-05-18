@@ -2,6 +2,7 @@ package guru.springframework.mssc.beer.order.service.service;
 
 import guru.cfg.brewery.model.BeerOrderDto;
 import guru.cfg.brewery.model.messages.AllocateOrderResult;
+import guru.cfg.brewery.model.messages.AllocatedOrderEvent;
 import guru.cfg.brewery.model.messages.Message;
 import guru.cfg.brewery.model.messages.ValidateOrderResult;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,8 @@ public interface MessageHandler {
     void handle(ValidateOrderResult result);
 
     void handle(AllocateOrderResult result);
+
+    void handle(AllocatedOrderEvent result);
 
     interface MessageHandlerMethod<T extends Message> {
 
@@ -44,6 +47,11 @@ public interface MessageHandler {
             if (result.isSuccessful() && !result.isPendingInventory()) {
                 beerOrderManager.processAllocationPassed(result.getBeerOrder());
             }
+        }
+
+        @Override
+        public void handle(AllocatedOrderEvent event) {
+            beerOrderManager.processAllocatedEvent(event);
         }
 
     }

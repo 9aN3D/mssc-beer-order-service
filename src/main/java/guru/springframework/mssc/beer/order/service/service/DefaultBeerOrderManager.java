@@ -2,6 +2,7 @@ package guru.springframework.mssc.beer.order.service.service;
 
 import guru.cfg.brewery.model.BeerOrderDto;
 import guru.cfg.brewery.model.BeerOrderLineDto;
+import guru.cfg.brewery.model.messages.AllocatedOrderEvent;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrder;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderLine;
@@ -23,6 +24,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
@@ -53,6 +55,7 @@ class DefaultBeerOrderManager implements BeerOrderManager {
 
     @Override
     public void processValidationResult(UUID orderId, Boolean isValid) {
+        //TODO add logs
         BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
         sendBeerOrderEvent(beerOrder, isValid ? VALIDATION_PASSED : VALIDATION_FAILED);
     }
@@ -67,14 +70,20 @@ class DefaultBeerOrderManager implements BeerOrderManager {
     public void processAllocationPendingInventory(BeerOrderDto beerOrderDto) {
         BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(beerOrderDto.getId());
         sendBeerOrderEvent(beerOrder, ALLOCATION_NO_INVENTORY);
-        updateAllocatedQtyWithRetryPolicy(beerOrderDto);
+        BeerOrder result = updateAllocatedQtyWithRetryPolicy(beerOrderDto);
     }
 
     @Override
     public void processAllocationPassed(BeerOrderDto beerOrderDto) {
         BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(beerOrderDto.getId());
         sendBeerOrderEvent(beerOrder, ALLOCATION_SUCCESS);
-        updateAllocatedQtyWithRetryPolicy(beerOrderDto);
+        BeerOrder result = updateAllocatedQtyWithRetryPolicy(beerOrderDto);
+    }
+
+    @Override
+    public void processAllocatedEvent(AllocatedOrderEvent event) {
+        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(event.getBeerOrderId());
+        sendBeerOrderEvent(beerOrder, ALLOCATED_ORDER);
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum eventEnum) {
@@ -98,16 +107,16 @@ class DefaultBeerOrderManager implements BeerOrderManager {
         return stateMachine;
     }
 
-    private void updateAllocatedQtyWithRetryPolicy(BeerOrderDto beerOrderDto) {
-        Failsafe.with(new RetryPolicy<>()
+    private BeerOrder updateAllocatedQtyWithRetryPolicy(BeerOrderDto beerOrderDto) {
+        return Failsafe.with(new RetryPolicy<BeerOrder>()
                         .handle(Exception.class)
                         .withMaxAttempts(1)
                         .withDelay(Duration.ofSeconds(2))
                         .onRetry(e -> log.info("Update allocated qty: {attempt: {}, orderId: {}}", e.getAttemptCount(), beerOrderDto.getId())))
-                .run(() -> updateAllocatedQty(beerOrderDto));
+                .get(() -> updateAllocatedQty(beerOrderDto));
     }
 
-    private void updateAllocatedQty(BeerOrderDto beerOrderDto) {
+    private BeerOrder updateAllocatedQty(BeerOrderDto beerOrderDto) {
         BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(beerOrderDto.getId());
         Map<UUID, BeerOrderLineDto> beerOrderLineIdToBeerOrderLineDto = beerOrderDto.collectBeerOrderLineByBeerOrderLineId();
 
@@ -117,7 +126,7 @@ class DefaultBeerOrderManager implements BeerOrderManager {
                 return dto;
             });
         }
-        beerOrderRepository.saveAndFlush(beerOrder);
+        return beerOrderRepository.saveAndFlush(beerOrder);
     }
 
 }

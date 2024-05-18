@@ -26,6 +26,7 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEvent
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_EXCEPTION;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_PENDING;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.CANCELLED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.DELIVERED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.DELIVERY_EXCEPTION;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.NEW;
@@ -52,6 +53,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
                 .states(EnumSet.allOf(BeerOrderStatus.class))
                 .end(PICKED_UP)
                 .end(DELIVERED)
+                .end(CANCELLED)
                 .end(DELIVERY_EXCEPTION)
                 .end(VALIDATION_EXCEPTION)
                 .end(ALLOCATION_EXCEPTION);
@@ -89,7 +91,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
         StateMachineListenerAdapter<BeerOrderStatus, BeerOrderEventEnum> adapter = new StateMachineListenerAdapter<>() {
             @Override
             public void stateChanged(State<BeerOrderStatus, BeerOrderEventEnum> from, State<BeerOrderStatus, BeerOrderEventEnum> to) {
-                log.trace("BeerOrderState changed from {}, to {}", from, to);
+                log.info("BeerOrderState changed from {}, to {}", from.getId(), to.getId());
             }
         };
         config.withConfiguration().listener(adapter);
