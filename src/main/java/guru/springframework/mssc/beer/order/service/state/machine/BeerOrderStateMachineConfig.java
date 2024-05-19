@@ -35,6 +35,7 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatu
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_EXCEPTION;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_PENDING;
+import static java.util.Objects.nonNull;
 
 @Slf4j
 @Configuration
@@ -91,7 +92,9 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
         StateMachineListenerAdapter<BeerOrderStatus, BeerOrderEventEnum> adapter = new StateMachineListenerAdapter<>() {
             @Override
             public void stateChanged(State<BeerOrderStatus, BeerOrderEventEnum> from, State<BeerOrderStatus, BeerOrderEventEnum> to) {
-                log.info("BeerOrderState changed from {}, to {}", from.getId(), to.getId());
+                if (nonNull(from) && nonNull(to)) {
+                    log.info("BeerOrderState changed from {}, to {}", from.getId(), to.getId());
+                }
             }
         };
         config.withConfiguration().listener(adapter);

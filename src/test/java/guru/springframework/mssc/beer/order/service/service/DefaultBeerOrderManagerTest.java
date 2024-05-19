@@ -58,7 +58,6 @@ class DefaultBeerOrderManagerTest {
 
     @Autowired
     private StateMachineFactory<BeerOrderStatus, BeerOrderEventEnum> stateMachineFactory;
-    ;
 
     private Customer customer;
 
