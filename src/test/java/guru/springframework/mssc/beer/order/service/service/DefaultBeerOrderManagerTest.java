@@ -58,6 +58,7 @@ class DefaultBeerOrderManagerTest {
 
     @Autowired
     private StateMachineFactory<BeerOrderStatus, BeerOrderEventEnum> stateMachineFactory;
+    ;
 
     private Customer customer;
 
@@ -98,6 +99,7 @@ class DefaultBeerOrderManagerTest {
 
         await().untilAsserted(() -> {
             BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(newBeerOrder.getId());
+
             assertEquals(ALLOCATED, beerOrder.getOrderStatus());
             BeerOrderLine beerOrderLine = beerOrder.getBeerOrderLines().iterator().next();
             assertEquals(beerOrderLine.getOrderQuantity(), beerOrderLine.getQuantityAllocated());

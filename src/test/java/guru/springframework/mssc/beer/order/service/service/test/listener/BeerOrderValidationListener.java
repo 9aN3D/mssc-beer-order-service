@@ -25,7 +25,7 @@ public class BeerOrderValidationListener {
 
         ValidateOrderRequest request = (ValidateOrderRequest) message.getPayload();
 
-        await().timeout(Duration.TWO_SECONDS);
+        //await().timeout(Duration.TWO_SECONDS);
 
         jmsTemplate.convertAndSend(JmsConfig.VALIDATING_ORDER_RESULT_QUEUE,
                 ValidateOrderResult.builder()

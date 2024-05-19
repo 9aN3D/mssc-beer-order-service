@@ -1,7 +1,6 @@
 package guru.springframework.mssc.beer.order.service.config;
 
 import guru.cfg.brewery.model.messages.AllocateOrderResult;
-import guru.cfg.brewery.model.messages.AllocatedOrderEvent;
 import guru.cfg.brewery.model.messages.ValidateOrderResult;
 import guru.springframework.mssc.beer.order.service.infrastructure.MessageDispatcher;
 import guru.springframework.mssc.beer.order.service.service.MessageHandler;
@@ -23,7 +22,6 @@ public class MessageHandlerRegistration {
     public void init() {
         messageDispatcher.registerHandler(ValidateOrderResult.class, messageHandler::handle);
         messageDispatcher.registerHandler(AllocateOrderResult.class, messageHandler::handle);
-        messageDispatcher.registerHandler(AllocatedOrderEvent.class, messageHandler::handle);
 
         log.info("Registered message handlers");
     }

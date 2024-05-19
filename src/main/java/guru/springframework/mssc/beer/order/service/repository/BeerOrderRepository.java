@@ -28,6 +28,10 @@ public interface BeerOrderRepository extends JpaRepository<BeerOrder, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     BeerOrder findOneById(UUID id);
 
+/*    @Override
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<BeerOrder> findById(UUID orderId);*/
+
     default BeerOrder findByIdOrThrow(UUID orderId) {
         return findById(orderId)
                 .orElseThrow(() -> new BeerOrderNotFoundException(format("Beer order not found: %s", orderId)));

@@ -42,14 +42,15 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatu
 @EnableStateMachineFactory
 public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderStatus, BeerOrderEventEnum> {
 
+    private final Action<BeerOrderStatus, BeerOrderEventEnum> validatedOrderStateAction;
     private final Action<BeerOrderStatus, BeerOrderEventEnum> validateOrderAction;
-    private final Action<BeerOrderStatus, BeerOrderEventEnum> validationPassedOrderAction;
     private final Action<BeerOrderStatus, BeerOrderEventEnum> allocateOrderAction;
 
     @Override
     public void configure(StateMachineStateConfigurer<BeerOrderStatus, BeerOrderEventEnum> states) throws Exception {
         states.withStates()
                 .initial(NEW)
+                .state(VALIDATED, validatedOrderStateAction)
                 .states(EnumSet.allOf(BeerOrderStatus.class))
                 .end(PICKED_UP)
                 .end(DELIVERED)
@@ -67,7 +68,6 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
                 .and()
                 .withExternal().source(VALIDATION_PENDING).target(VALIDATED)
                 .event(VALIDATION_PASSED)
-                .action(validationPassedOrderAction)
                 .and()
                 .withExternal().source(VALIDATION_PENDING).target(VALIDATION_EXCEPTION)
                 .event(VALIDATION_FAILED)

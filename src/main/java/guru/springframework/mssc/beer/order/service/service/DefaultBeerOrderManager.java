@@ -2,7 +2,6 @@ package guru.springframework.mssc.beer.order.service.service;
 
 import guru.cfg.brewery.model.BeerOrderDto;
 import guru.cfg.brewery.model.BeerOrderLineDto;
-import guru.cfg.brewery.model.messages.AllocatedOrderEvent;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrder;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderLine;
@@ -24,7 +23,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 
-import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
@@ -45,45 +43,58 @@ class DefaultBeerOrderManager implements BeerOrderManager {
 
     @Override
     public BeerOrder processNewBeerOrder(BeerOrder beerOrder) {
+        log.trace("Processing new beer order {}", beerOrder);
+
         beerOrder.setId(null);
         beerOrder.setOrderStatus(NEW);
 
         BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
         sendBeerOrderEvent(savedBeerOrder, VALIDATED_ORDER);
+
+        log.info("Processed new beer order {}", savedBeerOrder);
         return savedBeerOrder;
     }
 
     @Override
     public void processValidationResult(UUID orderId, Boolean isValid) {
-        //TODO add logs
+        log.trace("Processing validation result {orderId: {}, isValid: {}}", orderId, isValid);
+
         BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
         sendBeerOrderEvent(beerOrder, isValid ? VALIDATION_PASSED : VALIDATION_FAILED);
+
+        log.info("Processed validation result {}", beerOrder);
     }
 
     @Override
     public void processAllocationFailed(UUID orderId) {
+        log.trace("Processing allocation failed {}", orderId);
+
         BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
         sendBeerOrderEvent(beerOrder, ALLOCATION_FAILED);
+
+        log.info("Processed allocation failed {}", beerOrder);
     }
 
     @Override
     public void processAllocationPendingInventory(BeerOrderDto beerOrderDto) {
+        log.trace("Processing allocation pending inventory {}", beerOrderDto);
+
         BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(beerOrderDto.getId());
         sendBeerOrderEvent(beerOrder, ALLOCATION_NO_INVENTORY);
         BeerOrder result = updateAllocatedQtyWithRetryPolicy(beerOrderDto);
+
+        log.info("Processed allocation pending inventory {result: {}}", result);
     }
 
     @Override
     public void processAllocationPassed(BeerOrderDto beerOrderDto) {
+        log.trace("Processing allocation passed {}", beerOrderDto);
+
         BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(beerOrderDto.getId());
         sendBeerOrderEvent(beerOrder, ALLOCATION_SUCCESS);
         BeerOrder result = updateAllocatedQtyWithRetryPolicy(beerOrderDto);
-    }
 
-    @Override
-    public void processAllocatedEvent(AllocatedOrderEvent event) {
-        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(event.getBeerOrderId());
-        sendBeerOrderEvent(beerOrder, ALLOCATED_ORDER);
+        log.info("Processed allocation passed {result: {}}", result);
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum eventEnum) {
@@ -95,7 +106,7 @@ class DefaultBeerOrderManager implements BeerOrderManager {
 
     private StateMachine<BeerOrderStatus, BeerOrderEventEnum> build(BeerOrder beerOrder) {
         StateMachine<BeerOrderStatus, BeerOrderEventEnum> stateMachine = stateMachineFactory.getStateMachine(beerOrder.getId());
-
+        log.debug("StateMachine_stop() {}", beerOrder);
         stateMachine.stop();
 
         stateMachine.getStateMachineAccessor()
@@ -104,6 +115,7 @@ class DefaultBeerOrderManager implements BeerOrderManager {
                     sma.resetStateMachine(new DefaultStateMachineContext<>(beerOrder.getOrderStatus(), null, null, null));
                 });
         stateMachine.start();
+        log.debug("StateMachine_start() {}", stateMachine.getState().getId());
         return stateMachine;
     }
 
