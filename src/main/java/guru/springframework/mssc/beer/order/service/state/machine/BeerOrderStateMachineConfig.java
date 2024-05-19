@@ -20,6 +20,7 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEvent
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.BEER_ORDER_PICKED_UP;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
@@ -84,7 +85,10 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
                 .event(ALLOCATION_FAILED)
                 .and()
                 .withExternal().source(ALLOCATION_PENDING).target(PENDING_INVENTORY)
-                .event(ALLOCATION_NO_INVENTORY);
+                .event(ALLOCATION_NO_INVENTORY)
+                .and()
+                .withExternal().source(ALLOCATED).target(PICKED_UP)
+                .event(BEER_ORDER_PICKED_UP);
     }
 
     @Override

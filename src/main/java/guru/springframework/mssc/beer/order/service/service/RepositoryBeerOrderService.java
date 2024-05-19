@@ -2,13 +2,11 @@ package guru.springframework.mssc.beer.order.service.service;
 
 import guru.cfg.brewery.model.BeerOrderDto;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrder;
-import guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus;
 import guru.springframework.mssc.beer.order.service.domain.Customer;
 import guru.springframework.mssc.beer.order.service.repository.BeerOrderRepository;
 import guru.springframework.mssc.beer.order.service.repository.CustomerRepository;
 import guru.springframework.mssc.beer.order.service.web.mappers.BeerOrderMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.NEW;
-import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PICKED_UP;
 
 @Slf4j
 @Primary
@@ -24,14 +21,14 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatu
 @Transactional
 class RepositoryBeerOrderService extends BaseBeerOrderService implements BeerOrderService {
 
-    private final ApplicationEventPublisher publisher;
+    private final BeerOrderManager beerOrderManager;
 
     public RepositoryBeerOrderService(BeerOrderRepository beerOrderRepository,
                                       CustomerRepository customerRepository,
                                       BeerOrderMapper beerOrderMapper,
-                                      ApplicationEventPublisher publisher) {
+                                      BeerOrderManager beerOrderManager) {
         super(beerOrderRepository, customerRepository, beerOrderMapper);
-        this.publisher = publisher;
+        this.beerOrderManager = beerOrderManager;
     }
 
     @Override
@@ -46,11 +43,11 @@ class RepositoryBeerOrderService extends BaseBeerOrderService implements BeerOrd
 
         beerOrder.getBeerOrderLines().forEach(line -> line.setBeerOrder(beerOrder));
 
-        BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
-        BeerOrderDto savedBeerOrderDto = beerOrderMapper.beerOrderToDto(savedBeerOrder);
+        BeerOrder newBeerOrder = beerOrderManager.processNewBeerOrder(beerOrder);
+        BeerOrderDto result = beerOrderMapper.beerOrderToDto(newBeerOrder);
 
-        log.info("Placed order {beer order id: {}}", savedBeerOrderDto.getId());
-        return savedBeerOrderDto;
+        log.info("Placed order {beer order id: {}}", result.getId());
+        return result;
     }
 
     @Override
@@ -58,21 +55,10 @@ class RepositoryBeerOrderService extends BaseBeerOrderService implements BeerOrd
         log.trace("Picking order {customerId: {}, orderId: {}}", customerId, orderId);
 
         BeerOrder beerOrder = getOrder(customerId, orderId);
-        beerOrder.setOrderStatus(PICKED_UP);
+        //TODO verify actual status, must be ALLOCATED
+        beerOrderManager.processPickup(beerOrder.getId());
 
-        BeerOrder beerOrderSaved = beerOrderRepository.save(beerOrder);
-        log.info("Picked order {id: {}}", beerOrderSaved.getId());
-    }
-
-    @Override
-    public void updateStatus(UUID orderId, BeerOrderStatus status) {
-        log.trace("Updating order status {orderId: {}, status: {}}", orderId, status);
-
-        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
-        beerOrder.setOrderStatus(status);
-        BeerOrder beerOrderSaved = beerOrderRepository.saveAndFlush(beerOrder);
-
-        log.info("Updated order status {orderId: {}, result: {}}", orderId, beerOrderSaved);
+        log.info("Picked order {id: {}}", beerOrder.getId());
     }
 
 }

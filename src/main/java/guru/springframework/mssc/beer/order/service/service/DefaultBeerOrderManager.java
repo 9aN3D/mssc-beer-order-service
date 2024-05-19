@@ -26,6 +26,7 @@ import java.util.UUID;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.BEER_ORDER_PICKED_UP;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
@@ -95,6 +96,16 @@ class DefaultBeerOrderManager implements BeerOrderManager {
         BeerOrder result = updateAllocatedQtyWithRetryPolicy(beerOrderDto);
 
         log.info("Processed allocation passed {result: {}}", result);
+    }
+
+    @Override
+    public void processPickup(UUID orderId) {
+        log.trace("Processing pickup {}", orderId);
+
+        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
+        sendBeerOrderEvent(beerOrder, BEER_ORDER_PICKED_UP);
+
+        log.info("Processed pickup {orderId: {}}", orderId);
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum eventEnum) {

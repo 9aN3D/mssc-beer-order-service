@@ -19,4 +19,6 @@ public interface BeerOrderManager {
 
     void processAllocationPassed(BeerOrderDto beerOrder);
 
+    void processPickup(UUID orderId);
+
 }
