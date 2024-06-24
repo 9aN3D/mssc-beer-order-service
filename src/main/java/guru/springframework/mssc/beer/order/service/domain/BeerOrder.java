@@ -10,6 +10,8 @@ import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import java.sql.Timestamp;
@@ -35,6 +37,7 @@ public class BeerOrder extends BaseEntity {
     @Fetch(FetchMode.JOIN)
     private Set<BeerOrderLine> beerOrderLines = new HashSet<>();
 
+    @Enumerated(EnumType.STRING)
     private BeerOrderStatus orderStatus = NEW;
 
     private String orderStatusCallbackUrl;

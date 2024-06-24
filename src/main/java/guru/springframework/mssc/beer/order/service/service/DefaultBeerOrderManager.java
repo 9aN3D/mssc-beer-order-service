@@ -30,7 +30,11 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEvent
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATED;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_PENDING;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.NEW;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PENDING_INVENTORY;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_PENDING;
 
 @Slf4j
 @Service
@@ -60,7 +64,7 @@ class DefaultBeerOrderManager implements BeerOrderManager {
     public void processValidationResult(UUID orderId, Boolean isValid) {
         log.trace("Processing validation result {orderId: {}, isValid: {}}", orderId, isValid);
 
-        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
+        BeerOrder beerOrder = findByIdWithRetryPolicy(orderId, VALIDATION_PENDING);
         sendBeerOrderEvent(beerOrder, isValid ? VALIDATION_PASSED : VALIDATION_FAILED);
 
         log.info("Processed validation result {}", beerOrder);
@@ -70,7 +74,7 @@ class DefaultBeerOrderManager implements BeerOrderManager {
     public void processAllocationFailed(UUID orderId) {
         log.trace("Processing allocation failed {}", orderId);
 
-        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
+        BeerOrder beerOrder = findByIdWithRetryPolicy(orderId, ALLOCATION_PENDING);
         sendBeerOrderEvent(beerOrder, ALLOCATION_FAILED);
 
         log.info("Processed allocation failed {}", beerOrder);
@@ -80,9 +84,9 @@ class DefaultBeerOrderManager implements BeerOrderManager {
     public void processAllocationPendingInventory(BeerOrderDto beerOrderDto) {
         log.trace("Processing allocation pending inventory {}", beerOrderDto);
 
-        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(beerOrderDto.getId());
+        BeerOrder beerOrder = findByIdWithRetryPolicy(beerOrderDto.getId(), ALLOCATION_PENDING);
         sendBeerOrderEvent(beerOrder, ALLOCATION_NO_INVENTORY);
-        BeerOrder result = updateAllocatedQtyWithRetryPolicy(beerOrderDto);
+        BeerOrder result = updateAllocatedQty(beerOrderDto, PENDING_INVENTORY);
 
         log.info("Processed allocation pending inventory {result: {}}", result);
     }
@@ -91,9 +95,9 @@ class DefaultBeerOrderManager implements BeerOrderManager {
     public void processAllocationPassed(BeerOrderDto beerOrderDto) {
         log.trace("Processing allocation passed {}", beerOrderDto);
 
-        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(beerOrderDto.getId());
+        BeerOrder beerOrder = findByIdWithRetryPolicy(beerOrderDto.getId(), ALLOCATION_PENDING);
         sendBeerOrderEvent(beerOrder, ALLOCATION_SUCCESS);
-        BeerOrder result = updateAllocatedQtyWithRetryPolicy(beerOrderDto);
+        BeerOrder result = updateAllocatedQty(beerOrderDto, ALLOCATED);
 
         log.info("Processed allocation passed {result: {}}", result);
     }
@@ -102,7 +106,7 @@ class DefaultBeerOrderManager implements BeerOrderManager {
     public void processPickup(UUID orderId) {
         log.trace("Processing pickup {}", orderId);
 
-        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
+        BeerOrder beerOrder = findByIdWithRetryPolicy(orderId, ALLOCATED);
         sendBeerOrderEvent(beerOrder, BEER_ORDER_PICKED_UP);
 
         log.info("Processed pickup {orderId: {}}", orderId);
@@ -130,17 +134,18 @@ class DefaultBeerOrderManager implements BeerOrderManager {
         return stateMachine;
     }
 
-    private BeerOrder updateAllocatedQtyWithRetryPolicy(BeerOrderDto beerOrderDto) {
-        return Failsafe.with(new RetryPolicy<BeerOrder>()
-                        .handle(Exception.class)
-                        .withMaxAttempts(1)
-                        .withDelay(Duration.ofSeconds(2))
-                        .onRetry(e -> log.info("Update allocated qty: {attempt: {}, orderId: {}}", e.getAttemptCount(), beerOrderDto.getId())))
-                .get(() -> updateAllocatedQty(beerOrderDto));
+    private BeerOrder findByIdWithRetryPolicy(UUID orderId, BeerOrderStatus status) {
+        return beerOrderRepository.getOrderWithRetryPolicy(
+                orderId,
+                status,
+                3,
+                Duration.ofSeconds(2),
+                log
+        );
     }
 
-    private BeerOrder updateAllocatedQty(BeerOrderDto beerOrderDto) {
-        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(beerOrderDto.getId());
+    private BeerOrder updateAllocatedQty(BeerOrderDto beerOrderDto, BeerOrderStatus status) {
+        BeerOrder beerOrder = findByIdWithRetryPolicy(beerOrderDto.getId(), status);
         Map<UUID, BeerOrderLineDto> beerOrderLineIdToBeerOrderLineDto = beerOrderDto.collectBeerOrderLineByBeerOrderLineId();
 
         for (BeerOrderLine line : beerOrder.getBeerOrderLines()) {

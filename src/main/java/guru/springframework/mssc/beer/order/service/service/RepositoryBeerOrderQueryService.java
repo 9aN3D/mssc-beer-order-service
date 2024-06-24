@@ -3,11 +3,11 @@ package guru.springframework.mssc.beer.order.service.service;
 import guru.cfg.brewery.model.BeerOrderDto;
 import guru.cfg.brewery.model.BeerOrderPagedList;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrder;
+import guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus;
 import guru.springframework.mssc.beer.order.service.domain.Customer;
 import guru.springframework.mssc.beer.order.service.repository.BeerOrderRepository;
 import guru.springframework.mssc.beer.order.service.repository.CustomerRepository;
 import guru.springframework.mssc.beer.order.service.web.mappers.BeerOrderMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -64,6 +65,17 @@ class RepositoryBeerOrderQueryService extends BaseBeerOrderService implements Be
         BeerOrderDto result = beerOrderMapper.beerOrderToDto(beerOrderRepository.findByIdOrThrow(orderId));
 
         log.info("Got order {result: {}}", result);
+        return result;
+    }
+
+    @Override
+    public BeerOrderDto getOrderWithRetryPolicy(UUID orderId, BeerOrderStatus status, int maxAttempts, Duration delay) {
+        log.trace("Getting order with retry policy {orderId: {}, status: {}, maxAttempts: {}, delay: {}}", orderId, status, maxAttempts, delay);
+
+        BeerOrder beerOrder = beerOrderRepository.getOrderWithRetryPolicy(orderId, status, maxAttempts, delay, log);
+        BeerOrderDto result = beerOrderMapper.beerOrderToDto(beerOrder);
+
+        log.info("Got order with retry policy {orderId: {}, result: {}}", orderId, result);
         return result;
     }
 

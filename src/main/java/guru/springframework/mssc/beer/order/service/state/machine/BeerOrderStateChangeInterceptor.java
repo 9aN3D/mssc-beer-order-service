@@ -12,6 +12,7 @@ import org.springframework.statemachine.state.State;
 import org.springframework.statemachine.support.StateMachineInterceptorAdapter;
 import org.springframework.statemachine.transition.Transition;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import static java.util.function.Predicate.not;
 public class BeerOrderStateChangeInterceptor extends StateMachineInterceptorAdapter<BeerOrderStatus, BeerOrderEventEnum> {
 
     private final BeerOrderRepository beerOrderRepository;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
     public void preStateChange(State<BeerOrderStatus, BeerOrderEventEnum> state,
@@ -41,9 +43,11 @@ public class BeerOrderStateChangeInterceptor extends StateMachineInterceptorAdap
     private void updateStatus(UUID orderId, BeerOrderStatus status) {
         log.trace("Updating order status {orderId: {}, status: {}}", orderId, status);
 
-        BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
-        beerOrder.setOrderStatus(status);
-        BeerOrder beerOrderSaved = beerOrderRepository.saveAndFlush(beerOrder);
+        BeerOrder beerOrderSaved = transactionTemplate.execute(transactionStatus -> {
+            BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(orderId);
+            beerOrder.setOrderStatus(status);
+            return beerOrderRepository.saveAndFlush(beerOrder);
+        });
 
         log.info("Updated order status {orderId: {}, result: {}}", orderId, beerOrderSaved);
     }

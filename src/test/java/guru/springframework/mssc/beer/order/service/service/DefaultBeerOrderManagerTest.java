@@ -13,15 +13,11 @@ import guru.springframework.mssc.beer.order.service.service.beer.BeerService;
 import guru.springframework.mssc.beer.order.service.service.beer.model.BeerDto;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.event.annotation.BeforeTestMethod;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -52,31 +48,23 @@ class DefaultBeerOrderManagerTest {
     CustomerRepository customerRepository;
 
     @Autowired
-    WireMockServer wireMockServer;
-
-    @Autowired
     ObjectMapper objectMapper;
 
+    private WireMockServer wireMockServer;
     private Customer customer;
     private BeerDto beerDto;
     private BeerOrder testBeerOrder;
 
     private final String BEER_UPC = "023112332";
 
-    @TestConfiguration
-    static class RestTemplateBuilderProvider {
-
-        @Bean(destroyMethod = "stop")
-        public WireMockServer wireMockServer() {
-            WireMockServer wireMockServer = with(wireMockConfig().port(8094));
-            wireMockServer.start();
-            return wireMockServer;
-        }
-
-    }
-
     @BeforeEach
     void setup() {
+        wireMockServer = with(wireMockConfig().port(8094));
+        wireMockServer.start();
+
+        customerRepository.deleteAll();
+        beerOrderRepository.deleteAll();
+
         customer = customerRepository.save(Customer.builder()
                 .customerName("Ala")
                 .build());
@@ -85,9 +73,13 @@ class DefaultBeerOrderManagerTest {
     }
 
     @AfterEach
-    void test() {
+    void tearDown() {
+        wireMockServer.stop();
         beerDto = null;
         testBeerOrder = null;
+
+        customerRepository.deleteAll();
+        beerOrderRepository.deleteAll();
     }
 
     @Test
