@@ -29,6 +29,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_EXCEPTION;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_PENDING;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PENDING_INVENTORY;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PICKED_UP;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_EXCEPTION;
 import static org.awaitility.Awaitility.await;
@@ -144,6 +146,42 @@ class DefaultBeerOrderManagerTest {
             BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(newBeerOrder.getId());
 
             assertEquals(VALIDATION_EXCEPTION, beerOrder.getOrderStatus());
+        });
+    }
+
+    @Test
+    void testAllocationFailure() throws JsonProcessingException {
+        wireMockServer.stubFor(get(BeerService.BEER_UPC_PATH_V1 + beerDto.getUpc())
+                .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
+
+        testBeerOrder.setCustomerRef("fail-allocation");
+        BeerOrder newBeerOrder = beerOrderManager.processNewBeerOrder(testBeerOrder);
+
+        assertNotNull(newBeerOrder);
+
+        await("testAllocationFailure_" + ALLOCATION_EXCEPTION.name()).untilAsserted(() -> {
+            BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(newBeerOrder.getId());
+
+            assertEquals(ALLOCATION_EXCEPTION, beerOrder.getOrderStatus());
+        });
+    }
+
+    @Test
+    void testPartialAllocation() throws JsonProcessingException {
+        wireMockServer.stubFor(get(BeerService.BEER_UPC_PATH_V1 + beerDto.getUpc())
+                .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
+
+        testBeerOrder.setCustomerRef("partial-allocation");
+        BeerOrder newBeerOrder = beerOrderManager.processNewBeerOrder(testBeerOrder);
+
+        assertNotNull(newBeerOrder);
+
+        await("testPartialAllocation_" + PENDING_INVENTORY.name()).untilAsserted(() -> {
+            BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(newBeerOrder.getId());
+
+            assertEquals(PENDING_INVENTORY, beerOrder.getOrderStatus());
+            BeerOrderLine beerOrderLine = beerOrder.getBeerOrderLines().iterator().next();
+            assertEquals(beerOrderLine.getOrderQuantity() - 1, beerOrderLine.getQuantityAllocated());
         });
     }
 

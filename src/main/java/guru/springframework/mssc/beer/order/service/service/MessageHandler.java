@@ -35,13 +35,13 @@ public interface MessageHandler {
         @Override
         public void handle(AllocateOrderResult result) {
             BeerOrderDto beerOrder = requireNonNull(result.getBeerOrder());
-            if (result.isError()) {
+            if (result.getError()) {
                 beerOrderManager.processAllocationFailed(beerOrder.getId());
             }
-            if (result.isSuccessful() && result.isPendingInventory()) {
+            if (!result.getError() && result.getPendingInventory()) {
                 beerOrderManager.processAllocationPendingInventory(result.getBeerOrder());
             }
-            if (result.isSuccessful() && !result.isPendingInventory()) {
+            if (!result.getError() && !result.getPendingInventory()) {
                 beerOrderManager.processAllocationPassed(result.getBeerOrder());
             }
         }

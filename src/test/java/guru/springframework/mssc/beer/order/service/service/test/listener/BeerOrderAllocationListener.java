@@ -6,13 +6,11 @@ import guru.cfg.brewery.model.messages.AllocateOrderResult;
 import guru.springframework.mssc.beer.order.service.config.JmsConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.awaitility.Duration;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
-
-import static org.awaitility.Awaitility.await;
 
 @Slf4j
 @Component
@@ -26,16 +24,21 @@ public class BeerOrderAllocationListener {
 
         AllocateOrderRequest request = (AllocateOrderRequest) message.getPayload();
 
-        for (BeerOrderLineDto line : request.getBeerOrder().getBeerOrderLines()) {
-            line.setQuantityAllocated(line.getOrderQuantity());
+        boolean hasError = "fail-allocation".equals(request.getBeerOrder().getCustomerRef());
+        boolean pendingInventory = "partial-allocation".equals(request.getBeerOrder().getCustomerRef());
+
+        if (!hasError) {
+            for (BeerOrderLineDto line : request.getBeerOrder().getBeerOrderLines()) {
+                line.setQuantityAllocated(pendingInventory ? line.getOrderQuantity() - 1 : line.getOrderQuantity());
+            }
         }
 
 
         jmsTemplate.convertAndSend(JmsConfig.ALLOCATING_ORDER_RESULT_QUEUE,
                 AllocateOrderResult.builder()
                         .beerOrder(request.getBeerOrder())
-                        .pendingInventory(false)
-                        .error(false)
+                        .pendingInventory(pendingInventory)
+                        .error(hasError)
                         .build());
     }
 
