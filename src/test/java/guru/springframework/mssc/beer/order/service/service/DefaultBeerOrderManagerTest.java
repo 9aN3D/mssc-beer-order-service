@@ -28,7 +28,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATED;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_EXCEPTION;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PICKED_UP;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_EXCEPTION;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -109,7 +111,7 @@ class DefaultBeerOrderManagerTest {
 
         assertNotNull(newBeerOrder);
 
-        await("testNewToPickedUp" + ALLOCATED.name()).untilAsserted(() -> {
+        await("testNewToPickedUp_" + ALLOCATED.name()).untilAsserted(() -> {
             BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(newBeerOrder.getId());
 
             assertEquals(ALLOCATED, beerOrder.getOrderStatus());
@@ -119,12 +121,29 @@ class DefaultBeerOrderManagerTest {
 
         beerOrderManager.processPickup(newBeerOrder.getId());
 
-        await("testNewToPickedUp" + PICKED_UP.name()).untilAsserted(() -> {
+        await("testNewToPickedUp_" + PICKED_UP.name()).untilAsserted(() -> {
             BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(newBeerOrder.getId());
 
             assertEquals(PICKED_UP, beerOrder.getOrderStatus());
             BeerOrderLine beerOrderLine = beerOrder.getBeerOrderLines().iterator().next();
             assertEquals(beerOrderLine.getOrderQuantity(), beerOrderLine.getQuantityAllocated());
+        });
+    }
+
+    @Test
+    void testFailedValidation() throws JsonProcessingException {
+        wireMockServer.stubFor(get(BeerService.BEER_UPC_PATH_V1 + beerDto.getUpc())
+                .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
+
+        testBeerOrder.setCustomerRef("fail-validation");
+        BeerOrder newBeerOrder = beerOrderManager.processNewBeerOrder(testBeerOrder);
+
+        assertNotNull(newBeerOrder);
+
+        await("testFailedValidation_" + VALIDATION_EXCEPTION.name()).untilAsserted(() -> {
+            BeerOrder beerOrder = beerOrderRepository.findByIdOrThrow(newBeerOrder.getId());
+
+            assertEquals(VALIDATION_EXCEPTION, beerOrder.getOrderStatus());
         });
     }
 
