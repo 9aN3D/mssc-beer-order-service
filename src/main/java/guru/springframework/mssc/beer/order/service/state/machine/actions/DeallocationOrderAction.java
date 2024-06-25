@@ -2,6 +2,7 @@ package guru.springframework.mssc.beer.order.service.state.machine.actions;
 
 import guru.cfg.brewery.model.BeerOrderDto;
 import guru.cfg.brewery.model.messages.AllocationFailureEvent;
+import guru.cfg.brewery.model.messages.DeallocateOrderRequest;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus;
 import guru.springframework.mssc.beer.order.service.events.producers.EventProducer;
@@ -16,20 +17,20 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AllocationFailureAction implements OrderAction {
+public class DeallocationOrderAction implements OrderAction {
 
     private final EventProducer eventProducer;
     private final BeerOrderQueryService beerOrderQueryService;
 
     @Override
     public void execute(StateContext<BeerOrderStatus, BeerOrderEventEnum> context) {
-        log.trace("Allocating failure action");
+        log.trace("Deallocating failure action");
 
         UUID orderId = getHeaderId(context);
         BeerOrderDto beerOrder = beerOrderQueryService.getOrder(orderId);
-        eventProducer.produceToAllocatingFailureQueue(new AllocationFailureEvent(beerOrder.getId()));
+        eventProducer.produceToDeallocatingOrderQueue(new DeallocateOrderRequest(beerOrder));
 
-        log.info("Sent Allocation failure event for order {id: {}}", orderId);
+        log.info("Sent Deallocate order request for order {id: {}}", orderId);
     }
 
 }

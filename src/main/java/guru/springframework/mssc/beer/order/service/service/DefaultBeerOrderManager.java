@@ -9,8 +9,6 @@ import guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus;
 import guru.springframework.mssc.beer.order.service.repository.BeerOrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
@@ -21,12 +19,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.BEER_ORDER_PICKED_UP;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.CANCELED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
@@ -34,6 +34,7 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatu
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_PENDING;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.NEW;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PENDING_INVENTORY;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_PENDING;
 
 @Slf4j
@@ -112,6 +113,16 @@ class DefaultBeerOrderManager implements BeerOrderManager {
         log.info("Processed pickup {orderId: {}}", orderId);
     }
 
+    @Override
+    public void processCancelOrder(UUID orderId) {
+        log.trace("Processing cancel order {}", orderId);
+
+        BeerOrder beerOrder = findByIdWithRetryPolicy(orderId, Set.of(VALIDATION_PENDING, ALLOCATION_PENDING, ALLOCATED));
+        sendBeerOrderEvent(beerOrder, CANCELED_ORDER);
+
+        log.info("Processed cancel order {orderId: {}}", orderId);
+    }
+
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum eventEnum) {
         build(beerOrder)
                 .sendEvent(MessageBuilder.withPayload(eventEnum)
@@ -155,6 +166,16 @@ class DefaultBeerOrderManager implements BeerOrderManager {
             });
         }
         return beerOrderRepository.saveAndFlush(beerOrder);
+    }
+
+    private BeerOrder findByIdWithRetryPolicy(UUID orderId, Set<BeerOrderStatus> statuses) {
+        return beerOrderRepository.getOrderWithRetryPolicy(
+                orderId,
+                statuses,
+                3,
+                Duration.ofSeconds(2),
+                log
+        );
     }
 
 }

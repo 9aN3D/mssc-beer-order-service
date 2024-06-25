@@ -5,13 +5,10 @@ import guru.cfg.brewery.model.messages.ValidateOrderResult;
 import guru.springframework.mssc.beer.order.service.config.JmsConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.awaitility.Duration;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
-
-import static org.awaitility.Awaitility.await;
 
 @Slf4j
 @Component
@@ -24,14 +21,17 @@ public class BeerOrderValidationListener {
     public void on(Message message) {
 
         ValidateOrderRequest request = (ValidateOrderRequest) message.getPayload();
+        String customerRef = request.getBeerOrder().getCustomerRef();
 
-        boolean isValid = !"fail-validation".equals(request.getBeerOrder().getCustomerRef());
+        if (!"dont-validate".equals(customerRef)) {
+            boolean isValid = !"fail-validation".equals(customerRef);
 
-        jmsTemplate.convertAndSend(JmsConfig.VALIDATING_ORDER_RESULT_QUEUE,
-                ValidateOrderResult.builder()
-                        .isValid(isValid)
-                        .orderId(request.getBeerOrder().getId())
-                        .build());
+            jmsTemplate.convertAndSend(JmsConfig.VALIDATING_ORDER_RESULT_QUEUE,
+                    ValidateOrderResult.builder()
+                            .isValid(isValid)
+                            .orderId(request.getBeerOrder().getId())
+                            .build());
+        }
     }
 
 }

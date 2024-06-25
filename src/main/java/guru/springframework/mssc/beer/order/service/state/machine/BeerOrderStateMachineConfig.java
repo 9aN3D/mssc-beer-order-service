@@ -21,6 +21,7 @@ import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEvent
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.BEER_ORDER_PICKED_UP;
+import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.CANCELED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATED_ORDER;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
@@ -49,6 +50,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
     private final Action<BeerOrderStatus, BeerOrderEventEnum> allocateOrderAction;
     private final Action<BeerOrderStatus, BeerOrderEventEnum> validationFailureAction;
     private final Action<BeerOrderStatus, BeerOrderEventEnum> allocationFailureAction;
+    private final Action<BeerOrderStatus, BeerOrderEventEnum> deallocationOrderAction;
 
     @Override
     public void configure(StateMachineStateConfigurer<BeerOrderStatus, BeerOrderEventEnum> states) throws Exception {
@@ -77,6 +79,10 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
                 .event(VALIDATION_FAILED)
                 .action(validationFailureAction)
                 .and()
+                .withExternal().source(VALIDATION_PENDING).target(CANCELLED)
+                .event(CANCELED_ORDER)
+                .action(deallocationOrderAction)
+                .and()
                 .withExternal().source(VALIDATED).target(ALLOCATION_PENDING)
                 .event(ALLOCATED_ORDER)
                 .action(allocateOrderAction)
@@ -91,8 +97,16 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<B
                 .withExternal().source(ALLOCATION_PENDING).target(PENDING_INVENTORY)
                 .event(ALLOCATION_NO_INVENTORY)
                 .and()
+                .withExternal().source(ALLOCATION_PENDING).target(CANCELLED)
+                .event(CANCELED_ORDER)
+                .action(deallocationOrderAction)
+                .and()
                 .withExternal().source(ALLOCATED).target(PICKED_UP)
-                .event(BEER_ORDER_PICKED_UP);
+                .event(BEER_ORDER_PICKED_UP)
+                .and()
+                .withExternal().source(ALLOCATED).target(CANCELLED)
+                .event(CANCELED_ORDER)
+                .action(deallocationOrderAction);
     }
 
     @Override

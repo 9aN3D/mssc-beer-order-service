@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.LockModeType;
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -49,6 +50,17 @@ public interface BeerOrderRepository extends JpaRepository<BeerOrder, UUID> {
                         .withMaxAttempts(maxAttempts)
                         .withDelay(delay)
                         .onRetry(e -> log.info("Getting order: {attempt: {}, orderId: {}, status: {}}", e.getAttemptCount(), orderId, status)))
+                .get(() -> findByIdOrThrow(orderId));
+    }
+
+    @Transactional
+    default BeerOrder getOrderWithRetryPolicy(UUID orderId, Set<BeerOrderStatus> statuses, int maxAttempts, Duration delay, Logger log) {
+        return Failsafe.with(new RetryPolicy<BeerOrder>()
+                        .handle(BeerOrderNotFoundException.class)
+                        .handleResultIf(value -> !statuses.contains(value.getOrderStatus()))
+                        .withMaxAttempts(maxAttempts)
+                        .withDelay(delay)
+                        .onRetry(e -> log.info("Getting order: {attempt: {}, orderId: {}, statuses: {}}", e.getAttemptCount(), orderId, statuses)))
                 .get(() -> findByIdOrThrow(orderId));
     }
 

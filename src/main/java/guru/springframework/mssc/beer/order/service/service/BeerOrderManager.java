@@ -21,4 +21,6 @@ public interface BeerOrderManager {
 
     void processPickup(UUID orderId);
 
+    void processCancelOrder(UUID orderId);
+
 }
