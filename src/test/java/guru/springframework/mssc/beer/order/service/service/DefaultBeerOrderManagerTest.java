@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jenspiegsa.wiremockextension.WireMockExtension;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import guru.cfg.brewery.model.messages.AllocationFailureEvent;
+import guru.springframework.mssc.beer.order.service.config.JmsConfig;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrder;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderLine;
 import guru.springframework.mssc.beer.order.service.domain.Customer;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.HashSet;
@@ -29,11 +32,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATED;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_EXCEPTION;
-import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.ALLOCATION_PENDING;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PENDING_INVENTORY;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.PICKED_UP;
 import static guru.springframework.mssc.beer.order.service.domain.BeerOrderStatus.VALIDATION_EXCEPTION;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -53,6 +57,9 @@ class DefaultBeerOrderManagerTest {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    @Autowired
+    JmsTemplate jmsTemplate;
 
     private WireMockServer wireMockServer;
     private Customer customer;
@@ -164,6 +171,12 @@ class DefaultBeerOrderManagerTest {
 
             assertEquals(ALLOCATION_EXCEPTION, beerOrder.getOrderStatus());
         });
+
+        Object event = jmsTemplate.receiveAndConvert(JmsConfig.ALLOCATING_FAILURE_QUEUE);
+        assertThat(event, instanceOf(AllocationFailureEvent.class));
+        AllocationFailureEvent allocationFailureEvent = (AllocationFailureEvent) event;
+        assertNotNull(allocationFailureEvent);
+        assertEquals(newBeerOrder.getId(), allocationFailureEvent.getOrderId());
     }
 
     @Test
