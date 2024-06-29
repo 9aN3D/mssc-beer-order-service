@@ -1,9 +1,9 @@
 package guru.springframework.mssc.beer.order.service.web.mappers;
 
+import guru.cfg.brewery.model.BeerOrderLineDto;
 import guru.springframework.mssc.beer.order.service.domain.BeerOrderLine;
 import guru.springframework.mssc.beer.order.service.service.beer.BeerService;
 import guru.springframework.mssc.beer.order.service.service.beer.model.BeerDto;
-import guru.cfg.brewery.model.BeerOrderLineDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -13,7 +13,7 @@ public abstract class BeerOrderLineMapperDecorator implements BeerOrderLineMappe
     private BeerService beerService;
 
     @Autowired
-    public void setBeerOrderLineMapper(@Qualifier("delegate")BeerOrderLineMapper beerOrderLineMapper) {
+    public void setBeerOrderLineMapper(@Qualifier("delegate") BeerOrderLineMapper beerOrderLineMapper) {
         this.beerOrderLineMapper = beerOrderLineMapper;
     }
 
