@@ -24,7 +24,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/v1/customers/{customerId}/")
+@RequestMapping("/api/v1/customers/{customerId}")
 public class BeerOrderController {
 
     private static final Integer DEFAULT_PAGE_NUMBER = 0;
@@ -32,7 +32,7 @@ public class BeerOrderController {
 
     private final BeerOrderFacade beerOrderFacade;
 
-    @GetMapping("orders")
+    @GetMapping("/orders")
     @ResponseStatus(OK)
     public BeerOrderPagedList listOrders(@PathVariable("customerId") UUID customerId,
                                          @RequestParam(value = "pageNumber", required = false) Integer pageNumber,
@@ -47,14 +47,14 @@ public class BeerOrderController {
         return beerOrderFacade.listOrders(customerId, PageRequest.of(pageNumber, pageSize));
     }
 
-    @PostMapping("orders")
+    @PostMapping("/orders")
     @ResponseStatus(CREATED)
     public BeerOrderDto placeOrder(@PathVariable("customerId") UUID customerId,
                                    @RequestBody BeerOrderDto beerOrderDto) {
         return beerOrderFacade.placeOrder(customerId, beerOrderDto);
     }
 
-    @GetMapping("orders/{orderId}")
+    @GetMapping("/orders/{orderId}")
     @ResponseStatus(OK)
     public BeerOrderDto getOrder(@PathVariable("customerId") UUID customerId,
                                  @PathVariable("orderId") UUID orderId) {
